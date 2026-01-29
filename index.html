@@ -56,12 +56,20 @@
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             font-family: 'Playfair Display', serif;
             font-size: 1.8rem;
             font-weight: 600;
             color: var(--foam);
             text-decoration: none;
             letter-spacing: 0.02em;
+        }
+
+        .logo img {
+            height: 42px;
+            width: auto;
         }
 
         .logo span {
@@ -336,6 +344,12 @@
             background: linear-gradient(180deg, transparent 60%, rgba(10, 22, 40, 0.8) 100%);
         }
 
+        .tank-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .placeholder-text {
             font-size: 0.85rem;
             color: var(--ocean-blue);
@@ -563,7 +577,7 @@
 <body>
     <!-- Navigation -->
     <nav>
-        <a href="#" class="logo">Aqua<span>wombat</span></a>
+        <a href="#" class="logo"><img src="images/logo.png" alt="Aquawombat mascot">Aqua<span>wombat</span></a>
         <ul class="nav-links">
             <li><a href="#tanks">Tanks</a></li>
             <li><a href="#about">About</a></li>
@@ -607,7 +621,7 @@
             <!-- Tanganyika -->
             <article class="tank-card">
                 <div class="tank-image">
-                    <span class="placeholder-text">[ Tanganyika Image ]</span>
+                    <img src="images/tanganyika/hero.jpg" alt="Tanganyika cichlid tank">
                 </div>
                 <div class="tank-content">
                     <h3>Tanganyika</h3>
@@ -617,7 +631,7 @@
             <!-- River Tank -->
             <article class="tank-card">
                 <div class="tank-image">
-                    <span class="placeholder-text">[ River Tank Image ]</span>
+                    <img src="images/river/hero.jpg" alt="River biotope tank">
                 </div>
                 <div class="tank-content">
                     <h3>River Tank</h3>
@@ -627,7 +641,7 @@
             <!-- Shrimp -->
             <article class="tank-card">
                 <div class="tank-image">
-                    <span class="placeholder-text">[ Shrimp Image ]</span>
+                    <img src="images/shrimp/hero.jpg" alt="Shrimp nano tank">
                 </div>
                 <div class="tank-content">
                     <h3>Shrimp</h3>
