@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gecko Browser | Galactic Geckos Explorer</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Galactic Geckos Browser</h1>
+        <p>Explore the 10,000 Galactic Gecko Space Garage collection</p>
+        <nav class="header-nav">
+            <a href="../index.html" class="nav-link">Aquawombat</a>
+            <a href="geckoindex.html" class="nav-link">Home</a>
+            <a href="browser.html" class="nav-link active">Browser</a>
+            <a href="favorites.html" class="nav-link">Favorites <span class="favorites-count">0</span></a>
+        </nav>
+    </div>
+
+    <div class="file-loader" id="fileLoader">
+        <div class="drop-zone" id="dropZone">
+            <h2>Load Your Geckos</h2>
+            <p>Drag & drop geckos.json here, or click to browse</p>
+            <button class="browse-btn">Select geckos.json</button>
+            <input type="file" id="fileInput" accept=".json">
+        </div>
+    </div>
+
+    <div class="controls" id="topControls">
+        <div class="pagination" id="pagination"></div>
+        <div class="page-input">
+            <span>Go to page:</span>
+            <input type="number" id="pageInput" min="1" max="100" value="1">
+            <button class="btn btn-primary" onclick="goToPage()">Go</button>
+        </div>
+        <div class="page-info" id="pageInfo"></div>
+    </div>
+
+    <div class="gecko-grid" id="geckoGrid"></div>
+
+    <div class="bottom-controls" id="bottomControls">
+        <div class="pagination" id="paginationBottom"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle"></div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-image-container">
+                    <img class="modal-image" id="modalImage" src="" alt="">
+                </div>
+                <div class="modal-details">
+                    <div class="modal-rank" id="modalRank"></div>
+                    <div class="modal-description" id="modalDescription"></div>
+                    <div class="traits-title">Traits</div>
+                    <div id="modalTraits"></div>
+                    <div class="modal-links" id="modalLinks"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

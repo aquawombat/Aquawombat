@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorites | Galactic Geckos Explorer</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .favorites-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .favorites-header h2 {
+            font-size: 1.8rem;
+            color: var(--color-text);
+            margin-bottom: 10px;
+        }
+
+        .favorites-header p {
+            color: var(--color-text-muted);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            stroke: var(--color-primary);
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: var(--color-text);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: var(--color-text-muted);
+            margin-bottom: 20px;
+        }
+
+        .favorites-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            background: rgba(108, 92, 231, 0.2);
+            border: 1px solid var(--color-primary);
+            border-radius: var(--radius-round);
+            color: var(--color-primary-light);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        .action-btn:hover {
+            background: var(--color-primary);
+            color: var(--color-text);
+        }
+
+        .action-btn.danger {
+            border-color: var(--color-error);
+            color: var(--color-error);
+        }
+
+        .action-btn.danger:hover {
+            background: var(--color-error);
+            color: var(--color-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Galactic Geckos Explorer</h1>
+        <p>Your Favorite Geckos</p>
+        <nav class="header-nav">
+            <a href="../index.html" class="nav-link">Aquawombat</a>
+            <a href="geckoindex.html" class="nav-link">Home</a>
+            <a href="browser.html" class="nav-link">Browser</a>
+            <a href="favorites.html" class="nav-link active">Favorites <span class="favorites-count">0</span></a>
+        </nav>
+    </div>
+
+    <div class="favorites-header">
+        <h2>Your Favorites (<span id="totalFavorites">0</span>)</h2>
+        <p>Geckos you've saved will appear here. Load geckos.json to view your favorites.</p>
+    </div>
+
+    <!-- File Loader (shown when no geckos loaded) -->
+    <div class="file-loader" id="fileLoader">
+        <div class="drop-zone" id="dropZone">
+            <h2>Load Your Geckos</h2>
+            <p>Drag & drop geckos.json here to view your favorites</p>
+            <button class="browse-btn">Select geckos.json</button>
+            <input type="file" id="fileInput" accept=".json">
+        </div>
+    </div>
+
+    <!-- Empty State (shown when loaded but no favorites) -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <h3>No Favorites Yet</h3>
+        <p>Start browsing the collection and click the heart icon to save your favorite geckos!</p>
+        <a href="browser.html" class="browse-btn" style="display: inline-block; text-decoration: none;">Browse Collection</a>
+    </div>
+
+    <!-- Favorites Actions -->
+    <div class="favorites-actions" id="favoritesActions" style="display: none;">
+        <button class="action-btn" onclick="exportFavorites()">Export Favorites</button>
+        <button class="action-btn danger" onclick="clearAllFavorites()">Clear All Favorites</button>
+    </div>
+
+    <!-- Favorites Grid -->
+    <div class="gecko-grid" id="geckoGrid"></div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle"></div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-image-container">
+                    <img class="modal-image" id="modalImage" src="" alt="">
+                </div>
+                <div class="modal-details">
+                    <div class="modal-rank" id="modalRank"></div>
+                    <div class="modal-description" id="modalDescription"></div>
+                    <div class="traits-title">Traits</div>
+                    <div id="modalTraits"></div>
+                    <div class="modal-links" id="modalLinks"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Override for favorites page
+        let allGeckos = [];
+
+        // Auto-load geckos for favorites page
+        async function autoLoadForFavorites() {
+            try {
+                const dropZone = document.getElementById('dropZone');
+                if (dropZone) {
+                    dropZone.innerHTML = `
+                        <h2>Loading Geckos...</h2>
+                        <p>Fetching collection data</p>
+                        <div class="loading-spinner"></div>
+                    `;
+                }
+
+                const response = await fetch('geckos.json');
+                if (!response.ok) throw new Error('Failed to load');
+
+                const data = await response.json();
+                allGeckos = data.result.data.items;
+                window.geckos = allGeckos;
+
+                document.getElementById('fileLoader').classList.add('hidden');
+                renderFavorites();
+            } catch (error) {
+                console.warn('Auto-load failed, showing file picker');
+                resetDropZone();
+            }
+        }
+
+        function resetDropZone() {
+            const dropZone = document.getElementById('dropZone');
+            if (dropZone) {
+                dropZone.innerHTML = `
+                    <h2>Load Your Geckos</h2>
+                    <p>Drag & drop geckos.json here to view your favorites</p>
+                    <button class="browse-btn">Select geckos.json</button>
+                    <input type="file" id="fileInput" accept=".json">
+                `;
+                initFavoritesFileHandlers();
+            }
+        }
+
+        function loadFileForFavorites(file) {
+            if (!file.name.endsWith('.json')) {
+                alert('Please select a JSON file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    allGeckos = data.result.data.items;
+
+                    // Make geckos available globally for modal
+                    window.geckos = allGeckos;
+
+                    document.getElementById('fileLoader').classList.add('hidden');
+                    renderFavorites();
+                } catch (error) {
+                    alert('Error parsing JSON file.');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function renderFavorites() {
+            const favoriteIds = FavoritesManager.getAll();
+            const favoriteGeckos = allGeckos.filter(g => favoriteIds.includes(g.id));
+
+            document.getElementById('totalFavorites').textContent = favoriteGeckos.length;
+
+            const grid = document.getElementById('geckoGrid');
+            const emptyState = document.getElementById('emptyState');
+            const actions = document.getElementById('favoritesActions');
+
+            if (favoriteGeckos.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                actions.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                grid.classList.add('visible');
+                actions.style.display = 'flex';
+
+                grid.innerHTML = favoriteGeckos.map(gecko => createFavoriteCard(gecko)).join('');
+            }
+        }
+
+        function createFavoriteCard(gecko) {
+            const faction = gecko.attributes.find(a => a.name === 'Faction');
+            const body = gecko.attributes.find(a => a.name === 'Body');
+            const eyes = gecko.attributes.find(a => a.name === 'Eyes');
+
+            const attributesHTML = [
+                faction ? `<span class="attribute faction">${faction.value}</span>` : '',
+                body && body.value !== 'None' ? `<span class="attribute">${body.value}</span>` : '',
+                eyes && eyes.value !== 'None' ? `<span class="attribute">${eyes.value}</span>` : ''
+            ].filter(Boolean).join('');
+
+            return `
+                <div class="gecko-card" onclick="openModal(${gecko.id})">
+                    <button class="favorite-btn favorited" onclick="event.stopPropagation(); removeFavorite(${gecko.id})" title="Remove from favorites">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </button>
+                    <img class="gecko-image" src="${gecko.image}" alt="${gecko.name}" loading="lazy">
+                    <div class="gecko-info">
+                        <div class="gecko-name">${gecko.name}</div>
+                        <div class="gecko-rank">Rank #${gecko.rank}</div>
+                        <div class="gecko-attributes">${attributesHTML}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function removeFavorite(geckoId) {
+            FavoritesManager.toggle(geckoId);
+            renderFavorites();
+        }
+
+        function exportFavorites() {
+            const favoriteIds = FavoritesManager.getAll();
+            const favoriteGeckos = allGeckos.filter(g => favoriteIds.includes(g.id));
+
+            const exportData = {
+                exported: new Date().toISOString(),
+                count: favoriteGeckos.length,
+                geckos: favoriteGeckos
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'galactic-gecko-favorites.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAllFavorites() {
+            if (confirm('Are you sure you want to remove all favorites? This cannot be undone.')) {
+                localStorage.removeItem('galacticGecko_favorites');
+                window.favorites = new Set();
+                FavoritesManager.init();
+                renderFavorites();
+            }
+        }
+
+        function initFavoritesFileHandlers() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            if (!dropZone || !fileInput) return;
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                const file = e.dataTransfer.files[0];
+                if (file) loadFileForFavorites(file);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) loadFileForFavorites(file);
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update favorites count in nav
+            const count = FavoritesManager.getCount();
+            document.getElementById('totalFavorites').textContent = count;
+            document.querySelectorAll('.favorites-count').forEach(el => {
+                el.textContent = count;
+            });
+
+            // Auto-load geckos
+            autoLoadForFavorites();
+        });
+    </script>
+</body>
+</html>

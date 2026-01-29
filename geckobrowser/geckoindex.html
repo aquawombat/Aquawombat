@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Geckos Explorer | NFT Collection Browser</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <!-- Back to Aquawombat -->
+    <div class="header" style="padding: 15px 20px; text-align: center;">
+        <a href="../index.html" class="nav-link" style="color: #c5e4f3; text-decoration: none;">&larr; Back to Aquawombat</a>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1>Galactic Geckos Explorer</h1>
+        <p>Your ultimate tool for browsing, analyzing, and discovering the 10,000 Galactic Gecko Space Garage NFT collection</p>
+        <a href="browser.html" class="browse-btn" style="display: inline-block; text-decoration: none;">Launch Browser</a>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value">10,000</div>
+            <div class="stat-label">Total Geckos</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">7</div>
+            <div class="stat-label">Trait Categories</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="favoritesStatCount">0</div>
+            <div class="stat-label">Your Favorites</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Factions</div>
+        </div>
+    </div>
+
+    <!-- Feature Grid -->
+    <div class="feature-grid">
+        <a href="browser.html" class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+            </div>
+            <h3>Collection Browser</h3>
+            <p>Browse through all 10,000 Galactic Geckos with pagination, view detailed traits, rarity percentages, and more.</p>
+        </a>
+
+        <a href="favorites.html" class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+            <h3>Favorites</h3>
+            <p>Save your favorite geckos for quick access. Your favorites are stored locally and persist across sessions.</p>
+        </a>
+
+        <div class="feature-card" style="opacity: 0.6; cursor: not-allowed;">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+            </div>
+            <h3>Advanced Search</h3>
+            <p>Filter geckos by faction, body type, rarity range, and trait combinations. Coming soon!</p>
+        </div>
+
+        <div class="feature-card" style="opacity: 0.6; cursor: not-allowed;">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M18 20V10"></path>
+                    <path d="M12 20V4"></path>
+                    <path d="M6 20v-6"></path>
+                </svg>
+            </div>
+            <h3>Collection Stats</h3>
+            <p>View analytics including trait distributions, rarity curves, and faction breakdowns. Coming soon!</p>
+        </div>
+
+        <div class="feature-card" style="opacity: 0.6; cursor: not-allowed;">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <rect x="2" y="3" width="9" height="18" rx="2"></rect>
+                    <rect x="13" y="3" width="9" height="18" rx="2"></rect>
+                </svg>
+            </div>
+            <h3>Compare Geckos</h3>
+            <p>Select multiple geckos and compare their traits, rarity, and rankings side by side. Coming soon!</p>
+        </div>
+
+        <div class="feature-card" style="opacity: 0.6; cursor: not-allowed;">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </div>
+            <h3>Export Data</h3>
+            <p>Export your favorites or filtered results to JSON or CSV for external analysis. Coming soon!</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 40px 20px; color: var(--color-text-muted); border-top: 1px solid rgba(108, 92, 231, 0.3);">
+        <p>Galactic Geckos Explorer - An unofficial community tool</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">
+            <a href="https://galacticgeckos.com/" target="_blank" style="color: var(--color-primary-light);">Official Website</a> |
+            <a href="https://twitter.com/GalacticGeckoSG" target="_blank" style="color: var(--color-primary-light);">Twitter</a> |
+            <a href="https://discord.gg/TheGeckoDAO" target="_blank" style="color: var(--color-primary-light);">Discord</a> |
+            <a href="https://howrare.is/galacticgeckos" target="_blank" style="color: var(--color-primary-light);">HowRare.is</a>
+        </p>
+    </footer>
+
+    <script>
+        // Load favorites count from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const stored = localStorage.getItem('galacticGecko_favorites');
+            if (stored) {
+                try {
+                    const favorites = JSON.parse(stored);
+                    document.getElementById('favoritesStatCount').textContent = favorites.length;
+                } catch (e) {
+                    console.warn('Could not parse favorites');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
