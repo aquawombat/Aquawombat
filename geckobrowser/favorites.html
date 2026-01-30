@@ -93,17 +93,7 @@
 
     <div class="favorites-header">
         <h2>Your Favorites (<span id="totalFavorites">0</span>)</h2>
-        <p>Geckos you've saved will appear here. Load geckos.json to view your favorites.</p>
-    </div>
-
-    <!-- File Loader (shown when no geckos loaded) -->
-    <div class="file-loader" id="fileLoader">
-        <div class="drop-zone" id="dropZone">
-            <h2>Load Your Geckos</h2>
-            <p>Drag & drop geckos.json here to view your favorites</p>
-            <button class="browse-btn">Select geckos.json</button>
-            <input type="file" id="fileInput" accept=".json">
-        </div>
+        <p>Geckos you've saved will appear here.</p>
     </div>
 
     <!-- Empty State (shown when loaded but no favorites) -->
@@ -155,15 +145,6 @@
         // Auto-load geckos for favorites page
         async function autoLoadForFavorites() {
             try {
-                const dropZone = document.getElementById('dropZone');
-                if (dropZone) {
-                    dropZone.innerHTML = `
-                        <h2>Loading Geckos...</h2>
-                        <p>Fetching collection data</p>
-                        <div class="loading-spinner"></div>
-                    `;
-                }
-
                 const response = await fetch('geckos.json');
                 if (!response.ok) throw new Error('Failed to load');
 
@@ -171,50 +152,10 @@
                 allGeckos = data.result.data.items;
                 window.geckos = allGeckos;
 
-                document.getElementById('fileLoader').classList.add('hidden');
                 renderFavorites();
             } catch (error) {
-                console.warn('Auto-load failed, showing file picker');
-                resetDropZone();
+                console.error('Failed to load gecko data:', error);
             }
-        }
-
-        function resetDropZone() {
-            const dropZone = document.getElementById('dropZone');
-            if (dropZone) {
-                dropZone.innerHTML = `
-                    <h2>Load Your Geckos</h2>
-                    <p>Drag & drop geckos.json here to view your favorites</p>
-                    <button class="browse-btn">Select geckos.json</button>
-                    <input type="file" id="fileInput" accept=".json">
-                `;
-                initFavoritesFileHandlers();
-            }
-        }
-
-        function loadFileForFavorites(file) {
-            if (!file.name.endsWith('.json')) {
-                alert('Please select a JSON file');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    allGeckos = data.result.data.items;
-
-                    // Make geckos available globally for modal
-                    window.geckos = allGeckos;
-
-                    document.getElementById('fileLoader').classList.add('hidden');
-                    renderFavorites();
-                } catch (error) {
-                    alert('Error parsing JSON file.');
-                    console.error(error);
-                }
-            };
-            reader.readAsText(file);
         }
 
         function renderFavorites() {
@@ -299,36 +240,6 @@
                 FavoritesManager.init();
                 renderFavorites();
             }
-        }
-
-        function initFavoritesFileHandlers() {
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
-
-            if (!dropZone || !fileInput) return;
-
-            dropZone.addEventListener('click', () => fileInput.click());
-
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('drag-over');
-            });
-
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('drag-over');
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
-                const file = e.dataTransfer.files[0];
-                if (file) loadFileForFavorites(file);
-            });
-
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) loadFileForFavorites(file);
-            });
         }
 
         // Initialize on page load

@@ -127,53 +127,6 @@ body {
 }
 
 /* ============================================
-   File Loader Component
-   ============================================ */
-.file-loader {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px var(--spacing-lg);
-    text-align: center;
-}
-
-.file-loader.hidden {
-    display: none;
-}
-
-.drop-zone {
-    border: 3px dashed var(--color-primary);
-    border-radius: var(--radius-xl);
-    padding: 60px 40px;
-    background: rgba(108, 92, 231, 0.1);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    max-width: 500px;
-}
-
-.drop-zone:hover,
-.drop-zone.drag-over {
-    border-color: var(--color-secondary);
-    background: rgba(253, 121, 168, 0.1);
-    transform: scale(1.02);
-}
-
-.drop-zone h2 {
-    margin-bottom: var(--spacing-md);
-    color: var(--color-text);
-}
-
-.drop-zone p {
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-lg);
-}
-
-.drop-zone input {
-    display: none;
-}
-
-/* ============================================
    Button Components
    ============================================ */
 .btn {
@@ -806,10 +759,6 @@ body {
     .gecko-grid {
         padding: var(--spacing-md);
         gap: var(--spacing-md);
-    }
-
-    .drop-zone {
-        padding: 40px var(--spacing-lg);
     }
 
     .header-nav {

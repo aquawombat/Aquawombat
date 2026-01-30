@@ -82,12 +82,9 @@ const FavoritesManager = {
 // ============================================
 // DOM Elements
 // ============================================
-let fileLoader, dropZone, fileInput, geckoGrid, topControls, bottomControls, modal;
+let geckoGrid, topControls, bottomControls, modal;
 
 function initDOMElements() {
-    fileLoader = document.getElementById('fileLoader');
-    dropZone = document.getElementById('dropZone');
-    fileInput = document.getElementById('fileInput');
     geckoGrid = document.getElementById('geckoGrid');
     topControls = document.getElementById('topControls');
     bottomControls = document.getElementById('bottomControls');
@@ -95,59 +92,12 @@ function initDOMElements() {
 }
 
 // ============================================
-// File Handling
+// Data Loading
 // ============================================
-function initFileHandlers() {
-    if (!dropZone || !fileInput) return;
-
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        const file = e.dataTransfer.files[0];
-        if (file) loadFile(file);
-    });
-
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) loadFile(file);
-    });
-}
-
-function loadFile(file) {
-    if (!file.name.endsWith('.json')) {
-        alert('Please select a JSON file');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-            processGeckoData(data);
-        } catch (error) {
-            alert('Error parsing JSON file. Make sure it\'s the correct geckos.json file.');
-            console.error(error);
-        }
-    };
-    reader.readAsText(file);
-}
 
 // Auto-load gecko data from file path
 async function autoLoadGeckos() {
     try {
-        showLoadingState();
-
         const response = await fetch(CONFIG.dataFile);
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -157,14 +107,11 @@ async function autoLoadGeckos() {
         processGeckoData(data);
 
     } catch (error) {
-        console.warn('Auto-load failed:', error.message);
-        hideLoadingState();
-        // Show file loader as fallback
-        if (fileLoader) fileLoader.classList.remove('hidden');
+        console.error('Failed to load gecko data:', error.message);
     }
 }
 
-// Process loaded gecko data (shared by both load methods)
+// Process loaded gecko data
 function processGeckoData(data) {
     geckos = data.result.data.items;
     totalPages = Math.ceil(geckos.length / CONFIG.perPage);
@@ -175,45 +122,12 @@ function processGeckoData(data) {
     }
 
     // Show the browser UI
-    if (fileLoader) fileLoader.classList.add('hidden');
     if (topControls) topControls.classList.add('visible');
     if (geckoGrid) geckoGrid.classList.add('visible');
     if (bottomControls) bottomControls.classList.add('visible');
 
-    hideLoadingState();
     renderPagination();
     renderGeckos();
-}
-
-// Loading state helpers
-function showLoadingState() {
-    if (fileLoader) {
-        const dropZone = fileLoader.querySelector('.drop-zone');
-        if (dropZone) {
-            dropZone.innerHTML = `
-                <h2>Loading Geckos...</h2>
-                <p>Fetching collection data</p>
-                <div class="loading-spinner"></div>
-            `;
-        }
-    }
-}
-
-function hideLoadingState() {
-    // Reset drop zone if needed (for fallback)
-    if (fileLoader && !fileLoader.classList.contains('hidden')) {
-        const dropZone = fileLoader.querySelector('.drop-zone');
-        if (dropZone && dropZone.querySelector('.loading-spinner')) {
-            dropZone.innerHTML = `
-                <h2>Load Your Geckos</h2>
-                <p>Drag & drop geckos.json here, or click to browse</p>
-                <button class="browse-btn">Select geckos.json</button>
-                <input type="file" id="fileInput" accept=".json">
-            `;
-            // Re-attach event listeners
-            initFileHandlers();
-        }
-    }
 }
 
 // ============================================
@@ -478,11 +392,10 @@ function initEventListeners() {
 function init() {
     initDOMElements();
     FavoritesManager.init();
-    initFileHandlers();
     initEventListeners();
 
     // Auto-load gecko data if enabled
-    if (CONFIG.autoLoad && fileLoader) {
+    if (CONFIG.autoLoad) {
         autoLoadGeckos();
     }
 }
