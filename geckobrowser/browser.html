@@ -20,10 +20,35 @@
 
     <div class="controls" id="topControls">
         <div class="pagination" id="pagination"></div>
-        <div class="page-input">
-            <span>Go to page:</span>
-            <input type="number" id="pageInput" min="1" max="100" value="1">
-            <button class="btn btn-primary" onclick="goToPage()">Go</button>
+        <div class="control-group">
+            <div class="page-input">
+                <span>Go to page:</span>
+                <input type="number" id="pageInput" min="1" max="100" value="1">
+                <button class="btn btn-primary" onclick="goToPage()">Go</button>
+            </div>
+            <div class="gecko-input">
+                <span>Go to Gecko #:</span>
+                <input type="number" id="geckoInput" min="1" max="10000" placeholder="1-10000">
+                <button class="btn btn-primary" onclick="goToGecko()">Go</button>
+            </div>
+            <div class="column-selector">
+                <span>Per row:</span>
+                <div class="column-buttons">
+                    <button class="col-btn" onclick="setColumns(3)">3</button>
+                    <button class="col-btn" onclick="setColumns(4)">4</button>
+                    <button class="col-btn active" onclick="setColumns(5)">5</button>
+                    <button class="col-btn" onclick="setColumns(6)">6</button>
+                    <button class="col-btn" onclick="setColumns(7)">7</button>
+                    <button class="col-btn" onclick="setColumns(8)">8</button>
+                </div>
+            </div>
+            <button class="filter-btn" id="filterBtn" onclick="toggleFilterPanel()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M3 4h18v2H3V4zm3 7h12v2H6v-2zm3 7h6v2H9v-2z" fill="currentColor"/>
+                </svg>
+                Filter
+                <span class="filter-badge" id="filterBadge"></span>
+            </button>
         </div>
         <div class="page-info" id="pageInfo"></div>
     </div>
@@ -32,6 +57,73 @@
 
     <div class="bottom-controls" id="bottomControls">
         <div class="pagination" id="paginationBottom"></div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-overlay" id="filterOverlay" onclick="toggleFilterPanel()"></div>
+    <div class="filter-panel" id="filterPanel">
+        <div class="filter-header">
+            <h3>Filter by Traits</h3>
+            <button class="filter-close" onclick="toggleFilterPanel()">&times;</button>
+        </div>
+        <div class="filter-body">
+            <div class="filter-section" data-trait="Faction">
+                <div class="filter-section-header" onclick="toggleFilterSection(this)">
+                    <span>Faction</span>
+                    <span class="filter-section-toggle">-</span>
+                </div>
+                <div class="filter-options" id="filterFaction"></div>
+            </div>
+            <div class="filter-section" data-trait="Body">
+                <div class="filter-section-header" onclick="toggleFilterSection(this)">
+                    <span>Body</span>
+                    <span class="filter-section-toggle">-</span>
+                </div>
+                <div class="filter-options" id="filterBodyTrait"></div>
+            </div>
+            <div class="filter-section" data-trait="Eyes">
+                <div class="filter-section-header" onclick="toggleFilterSection(this)">
+                    <span>Eyes</span>
+                    <span class="filter-section-toggle">-</span>
+                </div>
+                <div class="filter-options" id="filterEyes"></div>
+            </div>
+            <div class="filter-section" data-trait="Mouth">
+                <div class="filter-section-header" onclick="toggleFilterSection(this)">
+                    <span>Mouth</span>
+                    <span class="filter-section-toggle">-</span>
+                </div>
+                <div class="filter-options" id="filterMouth"></div>
+            </div>
+            <div class="filter-section" data-trait="Ears">
+                <div class="filter-section-header" onclick="toggleFilterSection(this)">
+                    <span>Ears</span>
+                    <span class="filter-section-toggle">-</span>
+                </div>
+                <div class="filter-options" id="filterEars"></div>
+            </div>
+            <div class="filter-section" data-trait="Helmet">
+                <div class="filter-section-header" onclick="toggleFilterSection(this)">
+                    <span>Helmet</span>
+                    <span class="filter-section-toggle">-</span>
+                </div>
+                <div class="filter-options" id="filterHelmet"></div>
+            </div>
+            <div class="filter-section" data-trait="Armor">
+                <div class="filter-section-header" onclick="toggleFilterSection(this)">
+                    <span>Armor</span>
+                    <span class="filter-section-toggle">-</span>
+                </div>
+                <div class="filter-options" id="filterArmor"></div>
+            </div>
+        </div>
+        <div class="filter-footer">
+            <span class="filter-count" id="filterCount">10,000 geckos</span>
+            <div class="filter-actions">
+                <button class="filter-clear-btn" onclick="clearFilters()">Clear All</button>
+                <button class="filter-apply-btn" onclick="applyFilters()">Apply</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal -->

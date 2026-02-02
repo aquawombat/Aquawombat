@@ -22,6 +22,19 @@ let geckos = [];
 let currentPage = 1;
 let totalPages = 0;
 let favorites = new Set();
+let currentColumns = 5;
+let filteredGeckos = [];
+let isFilterActive = false;
+let activeFilters = {
+    Faction: new Set(),
+    Body: new Set(),
+    Eyes: new Set(),
+    Mouth: new Set(),
+    Ears: new Set(),
+    Helmet: new Set(),
+    Armor: new Set()
+};
+let traitValues = {}; // Will store all unique values for each trait
 
 // ============================================
 // Favorites System
@@ -82,13 +95,15 @@ const FavoritesManager = {
 // ============================================
 // DOM Elements
 // ============================================
-let geckoGrid, topControls, bottomControls, modal;
+let geckoGrid, topControls, bottomControls, modal, filterPanel, filterOverlay;
 
 function initDOMElements() {
     geckoGrid = document.getElementById('geckoGrid');
     topControls = document.getElementById('topControls');
     bottomControls = document.getElementById('bottomControls');
     modal = document.getElementById('modal');
+    filterPanel = document.getElementById('filterPanel');
+    filterOverlay = document.getElementById('filterOverlay');
 }
 
 // ============================================
@@ -97,6 +112,7 @@ function initDOMElements() {
 
 // Auto-load gecko data from file path
 async function autoLoadGeckos() {
+    console.log('Loading gecko data from:', CONFIG.dataFile);
     try {
         const response = await fetch(CONFIG.dataFile);
         if (!response.ok) {
@@ -104,10 +120,16 @@ async function autoLoadGeckos() {
         }
 
         const data = await response.json();
+        console.log('Gecko data loaded successfully, items:', data.result.data.items.length);
         processGeckoData(data);
 
     } catch (error) {
         console.error('Failed to load gecko data:', error.message);
+        // Show error to user
+        if (geckoGrid) {
+            geckoGrid.innerHTML = '<div style="text-align:center;padding:50px;color:#ff6b6b;">Failed to load gecko data. Make sure you are running this on a local server (not file://).</div>';
+            geckoGrid.classList.add('visible');
+        }
     }
 }
 
@@ -121,9 +143,16 @@ function processGeckoData(data) {
         pageInput.max = totalPages;
     }
 
+    // Initialize filter system
+    extractTraitValues();
+    populateFilterPanel();
+
     // Show the browser UI
     if (topControls) topControls.classList.add('visible');
-    if (geckoGrid) geckoGrid.classList.add('visible');
+    if (geckoGrid) {
+        geckoGrid.classList.add('visible');
+        geckoGrid.classList.add('cols-' + currentColumns);
+    }
     if (bottomControls) bottomControls.classList.add('visible');
 
     renderPagination();
@@ -146,9 +175,11 @@ function renderPagination() {
     if (pageInput) pageInput.value = currentPage;
 
     if (pageInfo) {
-        const start = (currentPage - 1) * CONFIG.perPage + 1;
-        const end = Math.min(currentPage * CONFIG.perPage, geckos.length);
-        pageInfo.textContent = `Showing ${start}-${end} of ${geckos.length} geckos`;
+        const displayGeckos = isFilterActive ? filteredGeckos : geckos;
+        const start = displayGeckos.length > 0 ? (currentPage - 1) * CONFIG.perPage + 1 : 0;
+        const end = Math.min(currentPage * CONFIG.perPage, displayGeckos.length);
+        const filterText = isFilterActive ? ' (filtered)' : '';
+        pageInfo.textContent = `Showing ${start}-${end} of ${displayGeckos.length.toLocaleString()} geckos${filterText}`;
     }
 }
 
@@ -196,14 +227,289 @@ function goToPage() {
 }
 
 // ============================================
+// Go to Gecko by Number
+// ============================================
+function goToGecko() {
+    const input = document.getElementById('geckoInput');
+    const geckoNum = parseInt(input.value);
+
+    if (isNaN(geckoNum) || geckoNum < 1 || geckoNum > geckos.length) {
+        alert(`Please enter a gecko number between 1 and ${geckos.length}`);
+        return;
+    }
+
+    // Find the gecko by its number (name contains the number)
+    const geckoIndex = geckos.findIndex(g => {
+        const match = g.name.match(/Galactic Gecko #(\d+)/);
+        return match && parseInt(match[1]) === geckoNum;
+    });
+
+    if (geckoIndex === -1) {
+        alert(`Gecko #${geckoNum} not found`);
+        return;
+    }
+
+    // Calculate which page this gecko is on
+    const pageNum = Math.floor(geckoIndex / CONFIG.perPage) + 1;
+    changePage(pageNum);
+
+    // After render, scroll to and highlight the gecko
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.gecko-card');
+        const cardIndex = geckoIndex % CONFIG.perPage;
+        if (cards[cardIndex]) {
+            cards[cardIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            cards[cardIndex].classList.add('highlight');
+            setTimeout(() => cards[cardIndex].classList.remove('highlight'), 2000);
+        }
+    }, 100);
+}
+
+// ============================================
+// Column Selector
+// ============================================
+function setColumns(cols) {
+    currentColumns = cols;
+
+    // Update grid class - remove old cols-* class and add new one
+    if (geckoGrid) {
+        // Remove any existing cols-* classes (convert to array first to avoid mutation issues)
+        const classesToRemove = Array.from(geckoGrid.classList).filter(cls => cls.startsWith('cols-'));
+        classesToRemove.forEach(cls => geckoGrid.classList.remove(cls));
+        // Add the new column class
+        geckoGrid.classList.add('cols-' + cols);
+    }
+
+    // Update active button state
+    document.querySelectorAll('.col-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.textContent) === cols);
+    });
+
+    // Save preference
+    localStorage.setItem('galacticGecko_columns', cols);
+}
+
+function loadColumnPreference() {
+    const saved = localStorage.getItem('galacticGecko_columns');
+    if (saved) {
+        const cols = parseInt(saved);
+        if (cols >= 3 && cols <= 8) {
+            currentColumns = cols;
+            // Update button state immediately
+            document.querySelectorAll('.col-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.textContent) === currentColumns);
+            });
+        }
+    }
+}
+
+// ============================================
+// Filter System
+// ============================================
+const TRAIT_ORDER = ['Faction', 'Body', 'Eyes', 'Mouth', 'Ears', 'Helmet', 'Armor'];
+
+function extractTraitValues() {
+    // Initialize traitValues with empty Maps (value -> count)
+    TRAIT_ORDER.forEach(trait => {
+        traitValues[trait] = new Map();
+    });
+
+    // Count occurrences of each trait value
+    geckos.forEach(gecko => {
+        TRAIT_ORDER.forEach(traitName => {
+            const trait = gecko.attributes.find(a => a.name === traitName);
+            if (trait) {
+                const count = traitValues[traitName].get(trait.value) || 0;
+                traitValues[traitName].set(trait.value, count + 1);
+            }
+        });
+    });
+}
+
+function populateFilterPanel() {
+    TRAIT_ORDER.forEach(traitName => {
+        // Body trait has a different ID to avoid conflict with filter-body wrapper
+        const containerId = traitName === 'Body' ? 'filterBodyTrait' : 'filter' + traitName;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const values = traitValues[traitName];
+        if (!values || values.size === 0) return;
+
+        // Sort values alphabetically, but put "None" at the end
+        const sortedValues = Array.from(values.entries()).sort((a, b) => {
+            if (a[0] === 'None') return 1;
+            if (b[0] === 'None') return -1;
+            return a[0].localeCompare(b[0]);
+        });
+
+        container.innerHTML = sortedValues.map(([value, count]) => `
+            <label class="filter-option">
+                <input type="checkbox"
+                    data-trait="${traitName}"
+                    data-value="${value}"
+                    onchange="handleFilterChange(this)">
+                <span class="filter-checkbox"></span>
+                <span class="filter-option-label">${value}</span>
+                <span class="filter-option-count">(${count.toLocaleString()})</span>
+            </label>
+        `).join('');
+    });
+
+    updateFilterCount();
+}
+
+function toggleFilterPanel() {
+    const isVisible = filterPanel && filterPanel.classList.contains('visible');
+
+    if (isVisible) {
+        filterPanel.classList.remove('visible');
+        filterOverlay.classList.remove('visible');
+        document.body.style.overflow = '';
+    } else {
+        filterPanel.classList.add('visible');
+        filterOverlay.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function toggleFilterSection(header) {
+    const section = header.closest('.filter-section');
+    section.classList.toggle('collapsed');
+    const toggle = header.querySelector('.filter-section-toggle');
+    toggle.textContent = section.classList.contains('collapsed') ? '+' : '-';
+}
+
+function handleFilterChange(checkbox) {
+    const trait = checkbox.dataset.trait;
+    const value = checkbox.dataset.value;
+
+    if (checkbox.checked) {
+        activeFilters[trait].add(value);
+    } else {
+        activeFilters[trait].delete(value);
+    }
+
+    updateFilterCount();
+}
+
+function getFilteredGeckos() {
+    return geckos.filter(gecko => {
+        // Check each trait that has active filters
+        for (const traitName of TRAIT_ORDER) {
+            const filterSet = activeFilters[traitName];
+            if (filterSet.size === 0) continue; // No filter for this trait
+
+            // Find this gecko's value for the trait
+            const trait = gecko.attributes.find(a => a.name === traitName);
+            const geckoValue = trait ? trait.value : null;
+
+            // Gecko must have one of the selected values (OR within trait)
+            if (!filterSet.has(geckoValue)) {
+                return false; // AND across traits - must match all
+            }
+        }
+        return true;
+    });
+}
+
+function updateFilterCount() {
+    const matchingGeckos = getFilteredGeckos();
+    const countEl = document.getElementById('filterCount');
+    if (countEl) {
+        countEl.textContent = `${matchingGeckos.length.toLocaleString()} gecko${matchingGeckos.length !== 1 ? 's' : ''}`;
+    }
+}
+
+function getActiveFilterCount() {
+    let count = 0;
+    TRAIT_ORDER.forEach(trait => {
+        count += activeFilters[trait].size;
+    });
+    return count;
+}
+
+function updateFilterBadge() {
+    const badge = document.getElementById('filterBadge');
+    if (!badge) return;
+
+    const count = getActiveFilterCount();
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.add('visible');
+    } else {
+        badge.classList.remove('visible');
+    }
+}
+
+function applyFilters() {
+    const hasFilters = getActiveFilterCount() > 0;
+
+    if (hasFilters) {
+        filteredGeckos = getFilteredGeckos();
+        isFilterActive = true;
+    } else {
+        filteredGeckos = [];
+        isFilterActive = false;
+    }
+
+    // Reset to page 1 when filters change
+    currentPage = 1;
+
+    // Recalculate total pages based on filtered results
+    const displayGeckos = isFilterActive ? filteredGeckos : geckos;
+    totalPages = Math.ceil(displayGeckos.length / CONFIG.perPage);
+
+    // Update the page input max
+    const pageInput = document.getElementById('pageInput');
+    if (pageInput) {
+        pageInput.max = totalPages;
+    }
+
+    updateFilterBadge();
+    renderPagination();
+    renderGeckos();
+    toggleFilterPanel();
+}
+
+function clearFilters() {
+    // Clear all active filters
+    TRAIT_ORDER.forEach(trait => {
+        activeFilters[trait].clear();
+    });
+
+    // Uncheck all checkboxes
+    document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+
+    // Reset filter state
+    filteredGeckos = [];
+    isFilterActive = false;
+    currentPage = 1;
+    totalPages = Math.ceil(geckos.length / CONFIG.perPage);
+
+    const pageInput = document.getElementById('pageInput');
+    if (pageInput) {
+        pageInput.max = totalPages;
+    }
+
+    updateFilterCount();
+    updateFilterBadge();
+    renderPagination();
+    renderGeckos();
+}
+
+// ============================================
 // Gecko Grid Rendering
 // ============================================
 function renderGeckos() {
     if (!geckoGrid) return;
 
+    const displayGeckos = isFilterActive ? filteredGeckos : geckos;
     const start = (currentPage - 1) * CONFIG.perPage;
     const end = start + CONFIG.perPage;
-    const pageGeckos = geckos.slice(start, end);
+    const pageGeckos = displayGeckos.slice(start, end);
 
     geckoGrid.innerHTML = pageGeckos.map(gecko => createGeckoCard(gecko)).join('');
 
@@ -369,6 +675,16 @@ function initEventListeners() {
         });
     }
 
+    // Gecko input enter key
+    const geckoInput = document.getElementById('geckoInput');
+    if (geckoInput) {
+        geckoInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                goToGecko();
+            }
+        });
+    }
+
     // Close modal on overlay click
     if (modal) {
         modal.addEventListener('click', function(e) {
@@ -378,10 +694,14 @@ function initEventListeners() {
         });
     }
 
-    // Close modal on Escape key
+    // Close modal or filter panel on Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            closeModal();
+            if (filterPanel && filterPanel.classList.contains('visible')) {
+                toggleFilterPanel();
+            } else {
+                closeModal();
+            }
         }
     });
 }
@@ -393,6 +713,7 @@ function init() {
     initDOMElements();
     FavoritesManager.init();
     initEventListeners();
+    loadColumnPreference();
 
     // Auto-load gecko data if enabled
     if (CONFIG.autoLoad) {
@@ -412,6 +733,8 @@ if (document.readyState === 'loading') {
 // ============================================
 window.changePage = changePage;
 window.goToPage = goToPage;
+window.goToGecko = goToGecko;
+window.setColumns = setColumns;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.toggleFavorite = toggleFavorite;
@@ -420,3 +743,9 @@ window.FavoritesManager = FavoritesManager;
 window.autoLoadGeckos = autoLoadGeckos;
 window.processGeckoData = processGeckoData;
 window.geckos = geckos;
+// Filter functions
+window.toggleFilterPanel = toggleFilterPanel;
+window.toggleFilterSection = toggleFilterSection;
+window.handleFilterChange = handleFilterChange;
+window.applyFilters = applyFilters;
+window.clearFilters = clearFilters;
